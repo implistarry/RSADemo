@@ -1,6 +1,7 @@
 package test;
 
 import java.io.ByteArrayOutputStream;  
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;  
 import java.nio.charset.Charset;  
 import java.security.InvalidKeyException;  
@@ -17,14 +18,80 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;  
 import javax.crypto.IllegalBlockSizeException;  
 import javax.crypto.NoSuchPaddingException;  
+
+import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
   
 /** 
  *RSA
  *  
  */  
 public class RSAUtil {  
-	 private static int MAXENCRYPTSIZE = 117;  
+	    private static int MAXENCRYPTSIZE = 117;  
 	    private static int MAXDECRYPTSIZE = 128;  
+	    
+	    
+	    /**
+		 * 解密
+		 * @param privateKey
+		 * @param encryptContent
+		 * @return
+		 */
+		public static String decrypt(String privateKey,String encryptContent){
+			 String txt=null;
+			try {
+			 byte[] encryptData2=RSAUtil.decodeBase64(encryptContent);		
+			 byte[] pk = RSAUtil.decodeBase64(privateKey);
+			 RSAPrivateKey privateKeyf = RSAUtil.getPrivateKey(pk);  	
+			 txt = new String(RSAUtil.decrypt(privateKeyf, encryptData2),"utf-8");
+			} catch (InvalidKeyException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalBlockSizeException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (BadPaddingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (NoSuchAlgorithmException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (NoSuchPaddingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InvalidKeySpecException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			 		
+			return new String(txt);
+			
+		}
+		
+		/**
+		 * 加密方法
+		 * @param publicKey
+		 * @param content
+		 * @return
+		 */
+		public static String encrypt(String publicKey,String content){
+			 RSAPublicKey rsaPublicKey;
+			 String miTxt="";
+			try {
+				rsaPublicKey = RSAUtil.getPublicKey(RSAUtil.decodeBase64(publicKey));
+				 byte[] encryptData = RSAUtil.encrypt(rsaPublicKey,content.getBytes(Charset.forName("utf-8")));  
+				  miTxt = RSAUtil.encodeBase64(encryptData);
+			} catch (NoSuchAlgorithmException e) {
+				e.printStackTrace();
+			} catch (InvalidKeySpecException e) {
+				e.printStackTrace();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}	
+			return miTxt;
+		}
 	  
 	    /** 
 	     * @param publicKeyByte 
@@ -32,14 +99,14 @@ public class RSAUtil {
 	     * @throws NoSuchAlgorithmException 
 	     * @throws InvalidKeySpecException 
 	     */  
-	    public static RSAPublicKey getPublicKey(byte[] publicKeyByte) throws NoSuchAlgorithmException, InvalidKeySpecException{  
+		private static RSAPublicKey getPublicKey(byte[] publicKeyByte) throws NoSuchAlgorithmException, InvalidKeySpecException{  
 	        X509EncodedKeySpec x509 = new X509EncodedKeySpec(publicKeyByte);          
 	        KeyFactory keyFactory = KeyFactory.getInstance("RSA");  
 	        RSAPublicKey publicKey = (RSAPublicKey) keyFactory.generatePublic(x509);  
 	        return publicKey;         
 	    }  
 	  
-	    public static RSAPrivateKey getPrivateKey(byte[] privateKeyByte) throws InvalidKeySpecException, NoSuchAlgorithmException {  
+		private static RSAPrivateKey getPrivateKey(byte[] privateKeyByte) throws InvalidKeySpecException, NoSuchAlgorithmException {  
 	        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyByte);  
 	        KeyFactory keyFactory = KeyFactory.getInstance("RSA");  
 	        return (RSAPrivateKey) keyFactory.generatePrivate(keySpec);  
@@ -53,7 +120,7 @@ public class RSAUtil {
 	     * @return Bute[] encryptData 
 	     * @throws Exception 
 	     */  
-	    public static byte[] encrypt(PublicKey publicKey, byte[] source)  
+		private static byte[] encrypt(PublicKey publicKey, byte[] source)  
 	            throws Exception {  
 	        try {  
 	            //此处填充方式选择部填充 NoPadding，当然模式和填充方式选择其他的，在Java端可以正确加密解密，  
@@ -100,7 +167,7 @@ public class RSAUtil {
 	     * @throws NoSuchAlgorithmException 
 	     * @throws NoSuchPaddingException 
 	     */  
-	    public static byte[] decrypt(PrivateKey privateKey, byte[] encryptData)  
+		private static byte[] decrypt(PrivateKey privateKey, byte[] encryptData)  
 	            throws IllegalBlockSizeException, BadPaddingException,  
 	            InvalidKeyException, NoSuchAlgorithmException,  
 	            NoSuchPaddingException {  
@@ -134,13 +201,13 @@ public class RSAUtil {
 	     * @return output with base64 encoded 
 	     * @throws Exception 
 	     */  
-	    public static String encodeBase64(byte[] input) throws Exception {  
-	        Class clazz = Class  
-	                .forName("com.sun.org.apache.xerces.internal.impl.dv.util.Base64");  
-	        Method mainMethod = clazz.getMethod("encode", byte[].class);  
-	        mainMethod.setAccessible(true);  
-	        Object retObj = mainMethod.invoke(null, new Object[] { input });  
-	        return (String) retObj;  
+		private static String encodeBase64(byte[] input) throws Exception { 
+//	        Class clazz = Class.forName("com.sun.org.apache.xerces.internal.impl.dv.util.Base64");  
+//	        Method mainMethod = clazz.getMethod("encode", byte[].class);  
+//	        mainMethod.setAccessible(true);  
+//	        Object retObj = mainMethod.invoke(null, new Object[] { input });  
+//	        return (String) retObj;  
+	    	return Base64.encode(input);
 	    }  
 	  
 	    /** 
@@ -150,20 +217,14 @@ public class RSAUtil {
 	     * @return 
 	     * @throws Exception 
 	     */  
-	    public static byte[] decodeBase64(String input) throws Exception {  
-	        Class clazz = Class  
-	                .forName("com.sun.org.apache.xerces.internal.impl.dv.util.Base64");  
-	        Method mainMethod = clazz.getMethod("decode", String.class);  
-	        mainMethod.setAccessible(true);  
-	        Object retObj = mainMethod.invoke(null, input);  
-	        return (byte[]) retObj;  
+		private static byte[] decodeBase64(String input)  {  
+//	        Class clazz = Class.forName("com.sun.org.apache.xerces.internal.impl.dv.util.Base64");  
+//	        Method mainMethod = clazz.getMethod("decode", String.class);  
+//	        mainMethod.setAccessible(true);  
+//	        Object retObj = mainMethod.invoke(null, input);  
+//	        return (byte[]) retObj;  
+	    	byte[] aa = Base64.decode(input);
+	        return aa;
 	    }  
-//	      
-//	    public static void main(String[] args) throws Exception {  
-//	        RSAPublicKey rsaPublicKey = getPublicKey(decodeBase64("MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQCzoQTA/zgahiaytyggCLoodqhuG8gRUXypUt+9HAtPsNhRHC2ksQazS8DnyyrfgrmPfv///AHURL2itn7L1gfrVcm7QDLwM/gXCjUV5lkRrlp7SDF6yxrF00PLWOvAae1eEmmg9ucymEjwq2pzEVMJyWslJdXjvYOSDstUMbqCtQIBAw=="));  
-//	        byte[] encryptData = encrypt(rsaPublicKey, "成功了...".getBytes(Charset.forName("utf-8")));  
-//	        System.out.println("密文：\n" + encodeBase64(encryptData));  
-//	        RSAPrivateKey privateKey = getPrivateKey(decodeBase64("MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBALOhBMD/OBqGJrK3KCAIuih2qG4byBFRfKlS370cC0+w2FEcLaSxBrNLwOfLKt+CuY9+///8AdREvaK2fsvWB+tVybtAMvAz+BcKNRXmWRGuWntIMXrLGsXTQ8tY68Bp7V4SaaD25zKYSPCranMRUwnJayUl1eO9g5IOy1QxuoK1AgEDAoGAd8Ct1f96vFlvIc9wFVsmxaRwSWfatjZTG4yVKL1c38s64L1zwyCvIjKAmodx6lcmX6n///1WjYMpFyRUh+QFRm9H60Ger3PfUII4epgVHqX20aRWy32cmW3Gp+r04p7ENja/Jey6HsdXb7Q32fdZKsLZOO2lvNdUu/5+LsP6wTMCQQDsFcBU1JFA3l6vZyi3b+nzZgoaCo6kMTTG4i/S/kf8cVPw5jaEVGUMhsXPkicWXNpppXNU4yA4gbNRN2XXnsjnAkEAwsgaCPBXxUq/l3k1Ssl5wgI2t6S66n6q57efpX4kf1W4z2Sxj3ufYL8DTYSFB/BvO3/cbHooQgLEv9aoNCOYAwJBAJ1j1Y3jC4CUPx+aGyT1RqJEBrwHCcLLeISWyoyphVL2N/XuzwLi7ghZ2TUMGg7okZvDojiXatBWd4t6Q+UUhe8CQQCB2rwF9Y/Y3H+6UM4x26aBVs8lGHycVHHvz7/DqW2qOSXfmHZfp7+V1KzeWFiv9Z98/+hIUXAsAdh/5HAiwmVXAkEAmo9GTWqbRP6BU75MPPnL42zq/4cQBI4yya03NDZjU1lwA2YvmFzJaM4mVmrsxNeDv6qY7Ibl/GDwIbAUaEHaAA=="));  
-//	        System.out.println("解密后数据：" + new String(decrypt(privateKey, encryptData),"utf-8"));  
-//	    }  
+ 
 }  
